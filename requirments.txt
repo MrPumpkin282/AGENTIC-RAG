@@ -1,0 +1,38 @@
+# API and configuration
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+pydantic
+pydantic-settings
+python-dotenv
+
+# Agent orchestration
+langgraph
+langchain-core
+langchain-community
+langchain-text-splitters
+
+# NVIDIA NIM integration
+langchain-nvidia-ai-endpoints
+
+# Vector database
+pinecone
+langchain-pinecone
+
+# Web search
+langchain-tavily
+
+# Document processing
+pypdf
+python-docx
+
+# Retrieval and reranking
+sentence-transformers
+
+# RAG evaluation
+ragas
+
+# Testing
+pytest
+httpx
