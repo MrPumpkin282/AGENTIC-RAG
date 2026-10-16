@@ -1,6 +1,5 @@
 import uuid
 from langchain_core.documents import Document
-from langchain_core.runnables import RunnableLambda
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, models
@@ -129,25 +128,12 @@ def get_parents(parent_ids):
     return [by_id[pid] for pid in parent_ids if pid in by_id]
 
 
-def retrieve(query):
-    hits = get_vectorstore().similarity_search(
-        query, k=settings.top_k * 2, filter=_namespace_filter()
-    )
-    parent_ids = []
-    for h in hits:
-        pid = h.metadata["parent_id"]
-        if pid not in parent_ids:
-            parent_ids.append(pid)
-    return get_parents(parent_ids[: settings.top_k])
-
-
-def get_retriever():
-    return RunnableLambda(retrieve)
-
-
 def add_documents(children, parents):
     store = get_vectorstore()
     client = get_client()
+
+    for doc in parents.values():
+        doc.metadata["namespace"] = _namespace()
 
     parent_points = [
         models.PointStruct(
@@ -165,3 +151,5 @@ def add_documents(children, parents):
     ids = [_point_id(c.metadata["child_id"]) for c in children]
     return store.add_documents(children, ids=ids)
 
+
+    
