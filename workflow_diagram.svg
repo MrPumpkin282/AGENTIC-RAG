@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1112.0293333333332 1421.7909999999995" width="1112.0293333333332" height="1421.7909999999995" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<polyline class="edge" data-from="Start" data-to="InitState" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="182.92108333333329,209.53499999999994 182.92108333333326,264.2015" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="InitState" data-to="S1" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="182.92108333333326,318.00149999999996 182.92108333333329,359.3349999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S1" data-to="CondRoute" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="182.92108333333329,413.135 182.92108333333329,461.135" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondRoute" data-to="S_Direct" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="direct" points="155.99791666666664,595.7508333333333 155.99791666666664,942.2909999999998 153.2295,942.2909999999998 153.22949999999997,1013.0324999999998" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S_Direct" data-to="EndNode" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="153.22949999999997,1066.8324999999998 153.22949999999997,1306.9909999999995 392.2192499999999,1306.9909999999995 392.2192499999999,1327.9909999999995" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondRoute" data-to="S2" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="kb" points="209.84424999999996,595.7508333333333 209.84424999999993,702.9739999999999 542.7542499999998,702.9739999999999 542.7542499999998,714.9739999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S2" data-to="S2_Resolve" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="589.3894166666664,768.7739999999999 589.3894166666665,816.7739999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S2_Resolve" data-to="S3" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="589.3894166666665,853.6739999999999 589.3894166666665,901.6739999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S3" data-to="CondKB" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="589.3894166666665,955.4739999999998 589.3894166666664,1013.0324999999998" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondKB" data-to="S7_KB" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="good" points="567.6532499999998,1121.7133333333331 567.6532499999998,1145.8909999999996 465.49441666666655,1145.8909999999996 465.49441666666655,1232.1909999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S7_KB" data-to="EndNode" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="465.49441666666655,1285.9909999999995 465.49441666666655,1306.9909999999995 392.2192499999999,1306.9909999999995 392.2192499999999,1327.9909999999995" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondKB" data-to="S4" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="weak" points="611.1255833333332,1121.713333333333 611.1255833333332,1157.8909999999996 713.2844166666666,1157.8909999999996 713.2844166666666,1232.1909999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S4" data-to="S5" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="713.2844166666666,1285.9909999999995 713.2844166666666,1315.9909999999995 933.9006666666664,1315.9909999999995 933.9006666666664,1327.9909999999995" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S5" data-to="CondWeb" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="1002.9649999999997,1327.9909999999995 1002.9649999999997,1315.9909999999995 1062.5843333333332,1315.9909999999995 1062.5843333333332,1056.0909999999997 927.38195,1056.0909999999997 927.38195,143.92599999999982" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondWeb" data-to="S7_Web" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="good" points="892.7399499999999,178.56799999999987 892.7399499999999,1056.0909999999997 920.8298333333332,1056.0909999999997 920.8298333333332,1130.3909999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S7_Web" data-to="EndNode" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="920.8298333333332,1184.1909999999996 920.8298333333332,1306.9909999999995 392.2192499999999,1306.9909999999995 392.2192499999999,1327.9909999999995" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondWeb" data-to="CondRetry" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="weak" points="858.0979499999999,143.92600000000004 858.0979499999999,190.56799999999998 568.0152833333332,190.56799999999998 568.0152833333332,264.2015" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondRetry" data-to="S6" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="Yes" points="605.6829499999999,452.53983333333326 605.6829499999999,532.8739999999999 681.3338333333331,532.8739999999999 681.3338333333334,613.174" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S6" data-to="S2" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="681.3338333333334,666.9739999999999 681.3338333333334,702.9739999999999 636.0245833333331,702.9739999999999 636.0245833333331,714.9739999999999" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CondRetry" data-to="S_Fail" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="No (Exceeded)" points="530.3476166666665,452.53983333333326 530.3476166666665,646.674 321.76824999999997,646.674 321.76824999999997,690.9739999999999 276.45899999999995,690.9739999999999 276.45899999999995,1130.3909999999996" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="S_Fail" data-to="EndNode" data-style="solid" data-arrow-start="false" data-arrow-end="true" points="276.45899999999995,1184.1909999999996 276.45899999999995,1306.9909999999995 392.2192499999999,1306.9909999999995 392.2192499999999,1327.9909999999995" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="CondRoute" data-to="S_Direct" data-label="direct">
+  <rect x="130.7295" y="949.2909999999998" width="44.974000000000004" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="153.2165" y="964.4409999999998" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">direct</text>
+</g>
+<g class="edge-label" data-from="CondRoute" data-to="S2" data-label="kb">
+  <rect x="194.84424999999993" y="665.674" width="29.53" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="209.60924999999992" y="680.824" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">kb</text>
+</g>
+<g class="edge-label" data-from="CondKB" data-to="S7_KB" data-label="good">
+  <rect x="444.49441666666655" y="1152.8909999999996" width="41.41" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="465.19941666666654" y="1168.0409999999997" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">good</text>
+</g>
+<g class="edge-label" data-from="CondKB" data-to="S4" data-label="weak">
+  <rect x="691.7844166666666" y="1164.8909999999996" width="42.598" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="713.0834166666666" y="1180.0409999999997" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">weak</text>
+</g>
+<g class="edge-label" data-from="CondWeb" data-to="S7_Web" data-label="good">
+  <rect x="899.8298333333332" y="1063.0909999999997" width="41.41" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="920.5348333333333" y="1078.2409999999998" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">good</text>
+</g>
+<g class="edge-label" data-from="CondWeb" data-to="CondRetry" data-label="weak">
+  <rect x="546.5152833333332" y="197.56799999999998" width="42.598" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="567.8142833333332" y="212.718" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">weak</text>
+</g>
+<g class="edge-label" data-from="CondRetry" data-to="S6" data-label="Yes">
+  <rect x="662.8338333333331" y="539.8739999999999" width="36.658" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="681.1628333333331" y="555.0239999999999" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">Yes</text>
+</g>
+<g class="edge-label" data-from="CondRetry" data-to="S_Fail" data-label="No (Exceeded)">
+  <rect x="277.76824999999997" y="653.674" width="87.14800000000001" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="321.34225" y="668.824" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">No (Exceeded)</text>
+</g>
+<g class="node" data-id="Start" data-label="User Request: Question" data-shape="stadium">
+  <rect x="93.0330833333333" y="172.63499999999993" width="179.77599999999995" height="36.900000000000006" rx="18.450000000000003" ry="18.450000000000003" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="182.92108333333329" y="191.08499999999992" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">User Request: Question</text>
+</g>
+<g class="node" data-id="InitState" data-label="Initialize AgentState
+retry_count=0, trace=[" data-shape="rectangle">
+  <rect x="95.99708333333325" y="264.2015" width="173.848" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="182.92108333333326" y="291.1015" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="182.92108333333326" dy="-3.9000000000000012">Initialize AgentState</tspan><tspan x="182.92108333333326" dy="16.900000000000002">retry_count=0, trace=[</tspan></text>
+</g>
+<g class="node" data-id="S1" data-label="Node: route_question
+LLM Intent Classifier" data-shape="rectangle">
+  <rect x="99.33158333333328" y="359.3349999999999" width="167.17899999999997" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="182.92108333333329" y="386.2349999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="182.92108333333329" dy="-3.9000000000000012">Node: route_question</tspan><tspan x="182.92108333333329" dy="16.900000000000002">LLM Intent Classifier</tspan></text>
+</g>
+<g class="node" data-id="CondRoute" data-label="Route Decision?" data-shape="diamond">
+  <polygon points="182.92108333333329,461.135 263.6905833333333,541.9045 182.92108333333329,622.674 102.15158333333329,541.9045" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="182.92108333333329" y="541.9045" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Route Decision?</text>
+</g>
+<g class="node" data-id="S_Direct" data-label="Node: direct_answer
+LLM Conversational Response" data-shape="rectangle">
+  <rect x="40" y="1013.0324999999998" width="226.45899999999997" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="153.22949999999997" y="1039.9325" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="153.22949999999997" dy="-3.9000000000000012">Node: direct_answer</tspan><tspan x="153.22949999999997" dy="16.900000000000002">LLM Conversational Response</tspan></text>
+</g>
+<g class="node" data-id="EndNode" data-label="Terminal Node: END" data-shape="stadium">
+  <rect x="312.7052499999999" y="1327.9909999999995" width="159.02799999999996" height="36.900000000000006" rx="18.450000000000003" ry="18.450000000000003" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="392.2192499999999" y="1346.4409999999996" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Terminal Node: END</text>
+</g>
+<g class="node" data-id="S2" data-label="Node: retrieve_kb
+Dense Similarity Search on Child Chunks" data-shape="rectangle">
+  <rect x="449.4839166666665" y="714.9739999999999" width="279.811" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="589.3894166666665" y="741.8739999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="589.3894166666665" dy="-3.9000000000000012">Node: retrieve_kb</tspan><tspan x="589.3894166666665" dy="16.900000000000002">Dense Similarity Search on Child Chunks</tspan></text>
+</g>
+<g class="node" data-id="S2_Resolve" data-label="Resolve Parent Documents via parent_id" data-shape="rectangle">
+  <rect x="449.85441666666657" y="816.7739999999999" width="279.06999999999994" height="36.900000000000006" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="589.3894166666665" y="835.2239999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Resolve Parent Documents via parent_id</text>
+</g>
+<g class="node" data-id="S3" data-label="Node: grade_kb
+LLM Evaluates Context vs Question" data-shape="rectangle">
+  <rect x="464.30391666666657" y="901.6739999999999" width="250.17099999999994" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="589.3894166666665" y="928.5739999999998" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="589.3894166666665" dy="-3.9000000000000012">Node: grade_kb</tspan><tspan x="589.3894166666665" dy="16.900000000000002">LLM Evaluates Context vs Question</tspan></text>
+</g>
+<g class="node" data-id="CondKB" data-label="KB Grade?" data-shape="diamond">
+  <polygon points="589.3894166666664,1013.0324999999998 654.5979166666664,1078.2409999999998 589.3894166666664,1143.4494999999997 524.1809166666665,1078.2409999999998" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="589.3894166666664" y="1078.2409999999998" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">KB Grade?</text>
+</g>
+<g class="node" data-id="S7_KB" data-label="Node: generate_from_kb
+Grounded Answer with Page Citations" data-shape="rectangle">
+  <rect x="335.5924166666666" y="1232.1909999999996" width="259.80399999999986" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="465.49441666666655" y="1259.0909999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="465.49441666666655" dy="-3.9000000000000012">Node: generate_from_kb</tspan><tspan x="465.49441666666655" dy="16.900000000000002">Grounded Answer with Page Citations</tspan></text>
+</g>
+<g class="node" data-id="S4" data-label="Node: search_web
+Tavily Search Fallback" data-shape="rectangle">
+  <rect x="623.3964166666665" y="1232.1909999999996" width="179.77599999999998" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="713.2844166666665" y="1259.0909999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="713.2844166666665" dy="-3.9000000000000012">Node: search_web</tspan><tspan x="713.2844166666665" dy="16.900000000000002">Tavily Search Fallback</tspan></text>
+</g>
+<g class="node" data-id="S5" data-label="Node: grade_web
+LLM Evaluates Web Results" data-shape="rectangle">
+  <rect x="864.8363333333332" y="1327.9909999999995" width="207.19299999999996" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="968.4328333333332" y="1354.8909999999996" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="968.4328333333332" dy="-3.9000000000000012">Node: grade_web</tspan><tspan x="968.4328333333332" dy="16.900000000000002">LLM Evaluates Web Results</tspan></text>
+</g>
+<g class="node" data-id="CondWeb" data-label="Web Grade?" data-shape="diamond">
+  <polygon points="892.7399499999998,40 962.0239499999998,109.28399999999999 892.7399499999998,178.56799999999998 823.4559499999998,109.28399999999999" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="892.7399499999998" y="109.28399999999999" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">Web Grade?</text>
+</g>
+<g class="node" data-id="S7_Web" data-label="Node: generate_from_web
+External Vendor Synthesized Answer" data-shape="rectangle">
+  <rect x="789.0753333333332" y="1130.3909999999996" width="263.50899999999996" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="920.8298333333332" y="1157.2909999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="920.8298333333332" dy="-3.9000000000000012">Node: generate_from_web</tspan><tspan x="920.8298333333332" dy="16.900000000000002">External Vendor Synthesized Answer</tspan></text>
+</g>
+<g class="node" data-id="CondRetry" data-label="retry_count &lt; max_retries?" data-shape="diamond">
+  <polygon points="568.0152833333332,264.2015 681.0182833333331,377.2045 568.0152833333332,490.2075 455.0122833333332,377.2045" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="568.0152833333332" y="377.2045" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)" dy="4.55">retry_count &lt; max_retries?</text>
+</g>
+<g class="node" data-id="S6" data-label="Node: rewrite_query
+LLM Technical Keyword Reformulation" data-shape="rectangle">
+  <rect x="546.2448333333332" y="613.174" width="270.178" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="681.3338333333331" y="640.074" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="681.3338333333331" dy="-3.9000000000000012">Node: rewrite_query</tspan><tspan x="681.3338333333331" dy="16.900000000000002">LLM Technical Keyword Reformulation</tspan></text>
+</g>
+<g class="node" data-id="S_Fail" data-label="Node: insufficient
+Abstain &amp; Suggest Escalation" data-shape="rectangle">
+  <rect x="170.6395" y="1130.3909999999996" width="211.63899999999992" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="276.45899999999995" y="1157.2909999999997" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="276.45899999999995" dy="-3.9000000000000012">Node: insufficient</tspan><tspan x="276.45899999999995" dy="16.900000000000002">Abstain &amp; Suggest Escalation</tspan></text>
+</g>
+</svg>
