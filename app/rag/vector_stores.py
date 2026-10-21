@@ -1,4 +1,8 @@
 import uuid
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, module="langchain_nvidia_ai_endpoints")
+
 from langchain_core.documents import Document
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_qdrant import QdrantVectorStore
@@ -31,7 +35,11 @@ def get_client():
     if _client is None:
         if not settings.cluster_end_point or not settings.qdrant_api_key:
             raise RuntimeError("CLUSTER_END_POINT or QDRANT_API_KEY is missing")
-        _client = QdrantClient(url=settings.cluster_end_point, api_key=settings.qdrant_api_key)
+        _client = QdrantClient(
+            url=settings.cluster_end_point,
+            api_key=settings.qdrant_api_key,
+            check_compatibility=False,
+        )
     return _client
 
 
@@ -149,7 +157,15 @@ def add_documents(children, parents):
     for c in children:
         c.metadata["namespace"] = _namespace()
     ids = [_point_id(c.metadata["child_id"]) for c in children]
-    return store.add_documents(children, ids=ids)
+
+    added_ids = []
+    batch_size = 50
+    for i in range(0, len(children), batch_size):
+        chunk_children = children[i : i + batch_size]
+        chunk_ids = ids[i : i + batch_size]
+        res = store.add_documents(chunk_children, ids=chunk_ids)
+        added_ids.extend(res)
+    return added_ids
 
 
     

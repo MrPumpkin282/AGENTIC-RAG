@@ -1,7 +1,6 @@
 # API and configuration
 fastapi
 uvicorn[standard]
-jinja2
 python-multipart
 pydantic
 pydantic-settings
@@ -17,8 +16,8 @@ langchain-text-splitters
 langchain-nvidia-ai-endpoints
 
 # Vector database
-pinecone
-langchain-pinecone
+qdrant-client
+langchain-qdrant
 
 # Web search
 langchain-tavily
@@ -26,12 +25,6 @@ langchain-tavily
 # Document processing
 pypdf
 python-docx
-
-# Retrieval and reranking
-sentence-transformers
-
-# RAG evaluation
-ragas
 
 # Testing
 pytest

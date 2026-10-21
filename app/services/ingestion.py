@@ -17,7 +17,7 @@ def load_file(path):
     if suffix == ".pdf":
         return PyPDFLoader(str(path)).load()
     if suffix in {".txt", ".md"}:
-        return TextLoader(str(path), encoding="utf-8").load()
+        return TextLoader(str(path), autodetect_encoding=True).load()
     if suffix == ".docx":
         doc = DocxDocument(str(path))
         text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
@@ -59,7 +59,7 @@ def chunk_documents(docs):
 
         # --- children ---
         for child_idx, child in enumerate(child_splitter.split_documents([parent])):
-            if len(child.page_content.strip()) < 50:
+            if not child.page_content.strip():
                 continue
             child.metadata.update({
                 "child_id": f"{parent_id}-c{child_idx}",

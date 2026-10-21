@@ -47,7 +47,7 @@ def chat(payload: ChatRequest):
 
 
 @router.post("/ingest")
-async def ingest(file: UploadFile = File(...), x_admin_key: str = Header(default="")):
+def ingest(file: UploadFile = File(...), x_admin_key: str = Header(default="")):
     if x_admin_key != settings.admin_api_key:
         raise HTTPException(status_code=401, detail="Invalid admin key")
     suffix = Path(file.filename or "").suffix.lower()
@@ -56,7 +56,7 @@ async def ingest(file: UploadFile = File(...), x_admin_key: str = Header(default
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
     dest = upload_dir / Path(file.filename).name
-    dest.write_bytes(await file.read())
+    dest.write_bytes(file.file.read())
     docs = load_file(dest)
     children, parents = chunk_documents(docs)
     ids = add_documents(children, parents)

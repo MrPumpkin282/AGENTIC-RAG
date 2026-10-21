@@ -1,4 +1,8 @@
 import traceback
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, module="langchain_nvidia_ai_endpoints")
+
 from app.core.config import get_settings
 from app.rag.state import RouteDecision, EvidenceGrade
 

@@ -1,5 +1,9 @@
 import logging
+import warnings
 from typing import Literal
+
+warnings.filterwarnings("ignore", category=UserWarning, module="langchain_nvidia_ai_endpoints")
+
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_tavily import TavilySearch
 from langgraph.graph import StateGraph, START, END
@@ -27,6 +31,7 @@ def llm():
         _llm = ChatNVIDIA(
             model=settings.nvidia_chat_model,
             temperature=0,
+            max_completion_tokens=2048,
             api_key=settings.nvidia_api_key,
         )
     return _llm
@@ -63,16 +68,41 @@ def build_context(docs):
         total += len(text)
     return "\n\n".join(parts)
 
+def _classify_route(question: str) -> str:
+    prompt = f"""You route user questions for an intelligent knowledge assistant.
+Use 'kb' for any questions seeking facts, concepts, summaries, troubleshooting, or information from ingested documents, research papers, technical manuals, or company documentation.
+Use 'direct' ONLY for simple greetings (hello, hi), expressions of thanks, or casual conversational pleasantries that require no reference material.
+Question: {question}
+Return ONLY 'kb' or 'direct'."""
+    try:
+        decision = llm().with_structured_output(RouteDecision).invoke(prompt)
+        if decision and hasattr(decision, "route") and decision.route in ("kb", "direct"):
+            return decision.route
+    except Exception as exc:
+        logger.warning("Structured route failed (%s), falling back to text parsing", exc)
+    raw = llm().invoke(prompt).content.strip().lower()
+    return "direct" if "direct" in raw and "kb" not in raw else "kb"
+
+def _grade_evidence(question: str, evidence: str, evidence_type: str = "Knowledge Base") -> str:
+    prompt = f"""You grade retrieved evidence against the user question.
+Question: {question}
+{evidence_type} evidence:
+{evidence}
+Return 'good' if the evidence contains relevant and sufficient facts to answer the question specifically.
+Otherwise return 'weak'.
+Return ONLY 'good' or 'weak'."""
+    try:
+        grade = llm().with_structured_output(EvidenceGrade).invoke(prompt)
+        if grade and hasattr(grade, "grade") and grade.grade in ("good", "weak"):
+            return grade.grade
+    except Exception as exc:
+        logger.warning("Structured grade failed (%s), falling back to text parsing", exc)
+    raw = llm().invoke(prompt).content.strip().lower()
+    return "good" if "good" in raw and "weak" not in raw else "weak"
+
 def route_question(state: AgentState):
-    router = llm().with_structured_output(RouteDecision)
-    decision = router.invoke(f"""
-You route messages for an enterprise IT support assistant.
-Use kb for questions about company IT policies, VPN, password reset, MFA, laptop setup,
-software access, security, email, devices, troubleshooting, or technology support.
-Use direct only for greetings, thanks, or casual chat that needs no company knowledge.
-Question: {state['question']}
-""")
-    return {"source_used": decision.route, "trace": add_trace(state, f"Router → {decision.route.upper()}")}
+    route = _classify_route(state["question"])
+    return {"source_used": route, "trace": add_trace(state, f"Router -> {route.upper()}")}
 
 def route_after_router(state: AgentState) -> Literal["retrieve_kb", "direct_answer"]:
     return "retrieve_kb" if state["source_used"] == "kb" else "direct_answer"
@@ -84,26 +114,19 @@ def retrieve_kb(state: AgentState):
     )
     parent_ids = []
     for h in hits:
-        pid = h.metadata["parent_id"]
-        if pid not in parent_ids:
+        pid = h.metadata.get("parent_id")
+        if pid and pid not in parent_ids:
             parent_ids.append(pid)
     docs = get_parents(parent_ids[: settings.top_k])
-    return {"kb_docs": docs, "trace": add_trace(state, f"Private KB retrieval → {len(docs)} chunks")}
+    return {"kb_docs": docs, "trace": add_trace(state, f"Private KB retrieval -> {len(docs)} chunks")}
 
 def grade_kb(state: AgentState):
     docs = state.get("kb_docs", [])
     if not docs:
-        return {"kb_grade": "weak", "trace": add_trace(state, "KB evidence grade → WEAK (no chunks)")}
-    grader = llm().with_structured_output(EvidenceGrade)
+        return {"kb_grade": "weak", "trace": add_trace(state, "KB evidence grade -> WEAK (no chunks)")}
     context = build_context(docs)
-    grade = grader.invoke(f"""
-You grade evidence for an enterprise IT support assistant.
-Question: {state['question']}
-Private company KB evidence:\n{context}
-Return good only if the evidence is sufficient to answer confidently and specifically.
-Otherwise return weak.
-""")
-    return {"kb_grade": grade.grade, "trace": add_trace(state, f"KB evidence grade → {grade.grade.upper()}")}
+    grade = _grade_evidence(state["question"], context, "Private company KB")
+    return {"kb_grade": grade, "trace": add_trace(state, f"KB evidence grade -> {grade.upper()}")}
 
 def after_kb(state: AgentState) -> Literal["generate_from_kb", "search_web"]:
     return "generate_from_kb" if state["kb_grade"] == "good" else "search_web"
@@ -125,17 +148,15 @@ def search_web(state: AgentState):
         "web_results": "\n\n".join(lines),
         "citations": citations,
         "source_used": "web",
-        "trace": add_trace(state, "Web fallback → Tavily search"),
+        "trace": add_trace(state, "Web fallback -> Tavily search"),
     }
 
 def grade_web(state: AgentState):
-    grader = llm().with_structured_output(EvidenceGrade)
-    grade = grader.invoke(f"""
-Question: {state['question']}
-Web evidence:\n{state.get('web_results', '')[:MAX_CONTEXT_CHARS]}
-Return good if the evidence is sufficient and directly relevant; otherwise weak.
-""")
-    return {"web_grade": grade.grade, "trace": add_trace(state, f"Web evidence grade → {grade.grade.upper()}")}
+    web_text = state.get("web_results", "")[:MAX_CONTEXT_CHARS]
+    if not web_text.strip():
+        return {"web_grade": "weak", "trace": add_trace(state, "Web evidence grade -> WEAK (no results)")}
+    grade = _grade_evidence(state["question"], web_text, "Web")
+    return {"web_grade": grade, "trace": add_trace(state, f"Web evidence grade -> {grade.upper()}")}
 
 def after_web(state: AgentState) -> Literal["generate_from_web", "rewrite_query", "insufficient"]:
     if state["web_grade"] == "good":
@@ -146,8 +167,9 @@ def after_web(state: AgentState) -> Literal["generate_from_web", "rewrite_query"
 
 def rewrite_query(state: AgentState):
     raw = llm().invoke(f"""
-Rewrite this IT support question for better private knowledge retrieval and vendor web search.
-Preserve intent, add useful technical keywords, do not answer, return only the query on one line, under 30 words.
+Rewrite this question to optimize retrieval against the knowledge base and web search.
+Extract core concepts, technical keywords, and topic terms. Remove meta phrasing (like 'in the pdf', 'tell me about').
+Preserve original intent, do not answer, return only the search query on one line, under 30 words.
 Question: {state['question']}
 """).content.strip()
     rewritten = raw.splitlines()[-1].strip()[:300] if raw else ""
@@ -155,49 +177,49 @@ Question: {state['question']}
     return {
         "current_query": rewritten,
         "retry_count": state.get("retry_count", 0) + 1,
-        "trace": add_trace(state, f"Query rewrite → {rewritten}"),
+        "trace": add_trace(state, f"Query rewrite -> {rewritten}"),
     }
 
 def generate_from_kb(state: AgentState):
     docs = state.get("kb_docs", [])
     context = build_context(docs)
     answer = llm().invoke(f"""
-You are an enterprise IT support copilot. Answer ONLY from the private company KB below.
-Be concise, actionable, and safe. If steps are present, present them clearly.
-Do not invent policy details. Mention that the answer is based on the company's private knowledge base.
-Question: {state['question']}\n\nPrivate KB:\n{context}
+You are an expert AI knowledge assistant. Answer the user question accurately and comprehensively using ONLY the provided knowledge base context below.
+Be concise, well-structured, and factual. Do not fabricate facts outside the context.
+Question: {state['question']}\n\nKnowledge Base:\n{context}
 """).content
     citations, seen = [], set()
     for d in docs:
-        name = d.metadata.get("file_name", "Private KB")
+        name = d.metadata.get("file_name", "Knowledge Base")
         page = d.metadata.get("page")
         if (name, page) in seen:
             continue
         seen.add((name, page))
-        c = {"source": name, "title": name}
+        title = f"{name} (page {page + 1})" if page is not None else name
+        c = {"source": name, "title": title}
         if page is not None:
             c["page"] = page + 1
         citations.append(c)
-    return {"answer": answer, "source_used": "kb", "citations": citations, "trace": add_trace(state, "Answer generation → PRIVATE KB")}
+    return {"answer": answer, "source_used": "kb", "citations": citations, "trace": add_trace(state, "Answer generation -> KNOWLEDGE BASE")}
 
 def generate_from_web(state: AgentState):
     answer = llm().invoke(f"""
-You are an enterprise IT support copilot. The private company KB was insufficient.
-Answer ONLY from the web evidence below. Clearly say this is external web information and may need IT validation before changing company-managed systems.
+You are an expert AI knowledge assistant. The private knowledge base was insufficient to answer this question.
+Answer the user question using ONLY the external web evidence below. Note clearly in your answer that this information is synthesized from external web sources.
 Question: {state['question']}\n\nWeb evidence:\n{state.get('web_results', '')[:MAX_CONTEXT_CHARS]}
 """).content
-    return {"answer": answer, "source_used": "web", "trace": add_trace(state, "Answer generation → WEB SEARCH")}
+    return {"answer": answer, "source_used": "web", "trace": add_trace(state, "Answer generation -> WEB SEARCH")}
 
 def direct_answer(state: AgentState):
     answer = llm().invoke(f"Respond briefly and naturally to: {state['question']}").content
-    return {"answer": answer, "source_used": "direct", "trace": add_trace(state, "Direct response → no retrieval")}
+    return {"answer": answer, "source_used": "direct", "trace": add_trace(state, "Direct response -> no retrieval")}
 
 def insufficient(state: AgentState):
     return {
-        "answer": "I couldn't find enough reliable evidence in the company knowledge base or external search to answer confidently. Please contact the IT help desk or provide more details.",
+        "answer": "I could not find enough reliable evidence in the knowledge base or external search to answer your question with confidence. Please refine your question or provide more details.",
         "source_used": "none",
         "citations": [],
-        "trace": add_trace(state, "Stopped → insufficient reliable evidence"),
+        "trace": add_trace(state, "Stopped -> insufficient reliable evidence"),
     }
 
 def build_graph():
