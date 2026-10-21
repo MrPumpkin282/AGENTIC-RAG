@@ -13,6 +13,10 @@ settings = get_settings()
 _llm = None
 _web_search = None
 
+MAX_CONTEXT_CHARS = 6000
+MAX_QUERY_CHARS = 1000
+
+
 def llm():
     global _llm
     if _llm is None:
@@ -49,6 +53,16 @@ def doc_label(d):
     page = d.metadata.get("page")
     return f"{name}, page {page + 1}" if page is not None else name
 
+def build_context(docs):
+    parts, total = [], 0
+    for d in docs:
+        text = f"[Source: {doc_label(d)}]\n{d.page_content}"
+        if total + len(text) > MAX_CONTEXT_CHARS:
+            break
+        parts.append(text)
+        total += len(text)
+    return "\n\n".join(parts)
+
 def route_question(state: AgentState):
     router = llm().with_structured_output(RouteDecision)
     decision = router.invoke(f"""
@@ -64,7 +78,7 @@ def route_after_router(state: AgentState) -> Literal["retrieve_kb", "direct_answ
     return "retrieve_kb" if state["source_used"] == "kb" else "direct_answer"
 
 def retrieve_kb(state: AgentState):
-    query = state.get("current_query", state["question"])
+    query = state.get("current_query", state["question"])[:MAX_QUERY_CHARS]
     hits = get_vectorstore().similarity_search(
         query, k=settings.top_k * 2, filter=_namespace_filter()
     )
@@ -81,7 +95,7 @@ def grade_kb(state: AgentState):
     if not docs:
         return {"kb_grade": "weak", "trace": add_trace(state, "KB evidence grade → WEAK (no chunks)")}
     grader = llm().with_structured_output(EvidenceGrade)
-    context = "\n\n".join(f"Source: {doc_label(d)}\n{d.page_content}" for d in docs)
+    context = build_context(docs)
     grade = grader.invoke(f"""
 You grade evidence for an enterprise IT support assistant.
 Question: {state['question']}
@@ -95,7 +109,8 @@ def after_kb(state: AgentState) -> Literal["generate_from_kb", "search_web"]:
     return "generate_from_kb" if state["kb_grade"] == "good" else "search_web"
 
 def search_web(state: AgentState):
-    result = web_search_tool().invoke({"query": state.get("current_query", state["question"])})
+    query = state.get("current_query", state["question"])[:MAX_QUERY_CHARS]
+    result = web_search_tool().invoke({"query": query})
     lines, citations = [], []
     if isinstance(result, dict):
         if result.get("answer"):
@@ -117,7 +132,7 @@ def grade_web(state: AgentState):
     grader = llm().with_structured_output(EvidenceGrade)
     grade = grader.invoke(f"""
 Question: {state['question']}
-Web evidence:\n{state.get('web_results', '')}
+Web evidence:\n{state.get('web_results', '')[:MAX_CONTEXT_CHARS]}
 Return good if the evidence is sufficient and directly relevant; otherwise weak.
 """)
     return {"web_grade": grade.grade, "trace": add_trace(state, f"Web evidence grade → {grade.grade.upper()}")}
@@ -130,11 +145,13 @@ def after_web(state: AgentState) -> Literal["generate_from_web", "rewrite_query"
     return "insufficient"
 
 def rewrite_query(state: AgentState):
-    rewritten = llm().invoke(f"""
+    raw = llm().invoke(f"""
 Rewrite this IT support question for better private knowledge retrieval and vendor web search.
-Preserve intent, add useful technical keywords, do not answer, return only the query.
+Preserve intent, add useful technical keywords, do not answer, return only the query on one line, under 30 words.
 Question: {state['question']}
 """).content.strip()
+    rewritten = raw.splitlines()[-1].strip()[:300] if raw else ""
+    rewritten = rewritten or state["question"]
     return {
         "current_query": rewritten,
         "retry_count": state.get("retry_count", 0) + 1,
@@ -143,7 +160,7 @@ Question: {state['question']}
 
 def generate_from_kb(state: AgentState):
     docs = state.get("kb_docs", [])
-    context = "\n\n".join(f"[Source: {doc_label(d)}]\n{d.page_content}" for d in docs)
+    context = build_context(docs)
     answer = llm().invoke(f"""
 You are an enterprise IT support copilot. Answer ONLY from the private company KB below.
 Be concise, actionable, and safe. If steps are present, present them clearly.
@@ -167,7 +184,7 @@ def generate_from_web(state: AgentState):
     answer = llm().invoke(f"""
 You are an enterprise IT support copilot. The private company KB was insufficient.
 Answer ONLY from the web evidence below. Clearly say this is external web information and may need IT validation before changing company-managed systems.
-Question: {state['question']}\n\nWeb evidence:\n{state.get('web_results', '')}
+Question: {state['question']}\n\nWeb evidence:\n{state.get('web_results', '')[:MAX_CONTEXT_CHARS]}
 """).content
     return {"answer": answer, "source_used": "web", "trace": add_trace(state, "Answer generation → WEB SEARCH")}
 
