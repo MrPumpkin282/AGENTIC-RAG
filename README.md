@@ -163,9 +163,9 @@ Roadmap
 
 Actively expanding this project with the following improvements:
 
-Semantic Caching — cache and reuse responses for semantically similar queries to reduce redundant LLM/embedding calls and improve latency.
-Hybrid Search (BM25 + Vector) — combine keyword-based BM25 retrieval with dense vector search to improve recall, especially for queries with exact terms or rare entities that embeddings alone can miss.
-Reranking Layer — add a reranking step after retrieval to reorder candidates by relevance before generation, validated by the agent's existing self-correction loop.
+1) Semantic Caching — cache and reuse responses for semantically similar queries to reduce redundant LLM/embedding calls and improve latency.
+2) Hybrid Search (BM25 + Vector) — combine keyword-based BM25 retrieval with dense vector search to improve recall, especially for queries with exact terms or        rare entities that embeddings alone can miss.
+3) Reranking Layer — add a reranking step after retrieval to reorder candidates by relevance before generation, validated by the agent's existing self-correction loop.
 
 ## License
 
