@@ -4,67 +4,18 @@ An intelligent **Agentic RAG** system built with **LangGraph**, **NVIDIA NIM**, 
 
 Unlike traditional RAG systems that blindly trust vector search, this agent **fact-checks retrieved evidence**, automatically **falls back to web search** when internal documents are insufficient, and **rewrites queries** to find accurate answers with exact page citations.
 
----
-
-## Architecture Block Diagram
-
-```mermaid
-flowchart TB
-    subgraph Input ["1. User Input"]
-        Query["User Question"]
-    end
-
-    subgraph Routing ["2. Intent Routing"]
-        Router{"Is it casual<br/>or factual?"}
-        DirectAns["Direct Answer<br/>(Greetings / Small Talk)"]
-    end
-
-    subgraph KB ["3. Private Knowledge Base (Qdrant)"]
-        ChildSearch["Search Child Chunks (400 chars)"]
-        ParentDoc["Fetch Parent Context (2,000 chars)"]
-        ChildSearch --> ParentDoc
-    end
-
-    subgraph Correction ["4. Self-Correction Engine"]
-        GradeKB{"Relevant<br/>Evidence?"}
-        WebSearch["Tavily Web Fallback"]
-        GradeWeb{"Relevant<br/>Web Info?"}
-        Rewrite["Query Rewriter<br/>(Refine Keywords)"]
-
-        WebSearch --> GradeWeb
-    end
-
-    subgraph Output ["5. Answer & Persistence"]
-        Answer["Grounded Answer<br/>+ Citations (Page / File)"]
-        AuditLog[("SQLite Audit Log<br/>data/audit.db")]
-    end
-
-    Query --> Router
-    Router -- "Casual" --> DirectAns --> AuditLog
-    Router -- "Factual" --> ChildSearch
-
-    ParentDoc --> GradeKB
-    GradeKB -- "Good" --> Answer
-    GradeKB -- "Weak" --> WebSearch
-
-    GradeWeb -- "Good" --> Answer
-    GradeWeb -- "Weak (Retry)" --> Rewrite
-    Rewrite --> ChildSearch
-    GradeWeb -- "Weak (Exceeded)" --> Answer
-
-    Answer --> AuditLog
-```
 
 ---
 
 ## Key Features
 
+- **Semantic Caching & Resource Safeguards**: Qdrant-backed cache stores previous answers based on cosine similarity, bypassing expensive LLM/embedding calls for repeat questions. Includes a zero-cost greeting interceptor, a 7-day TTL expiration, and a 500-item size cap to protect free-tier limits.
 - **Self-Corrective Loop**: Validates context before answering. If private documents lack answers, it automatically searches the live web via Tavily.
 - **Hierarchical Chunking (Parent-Child)**:
   - **Child chunks (400 chars)**: Embedded with file & page metadata for pinpoint vector search.
   - **Parent chunks (2,000 chars)**: Retrieved for generation to preserve full context and prevent hallucinations.
 - **Dual Interface**:
-  - **CLI Runner**: Interactive terminal streaming of reasoning steps and citations.
+  - **CLI Runner**: Interactive terminal streaming of reasoning steps, dynamic trace logs (showing exact PDF filenames), and citations.
   - **Headless API**: FastAPI endpoints (`/api/chat`, `/api/ingest`, `/api/health`).
 - **Audit Trail**: Logs questions, routing decisions, citations, and execution traces in SQLite (`data/audit.db`).
 
@@ -102,6 +53,7 @@ QDRANT_NAME_SPACE=DEFAULT
 NVIDIA_CHAT_MODEL=nvidia/nemotron-3.5-lightning-30b-a3b
 NVIDIA_EMBEDDING_MODEL=nvidia/nemotron-3.5-embed-1b
 ADMIN_API_KEY=localhost
+CACHE_SIMILARITY_THRESHOLD=0.85
 ```
 
 ---
@@ -151,21 +103,22 @@ uvicorn app.main:app --port 8080 --reload
 │   │   └── workflow.py       # LangGraph agent nodes & conditional edges
 │   └── services/
 │       ├── audit.py          # SQLite query logger
+│       ├── cache.py          # Semantic caching & free-tier safeguards
 │       └── ingestion.py      # Document loader & parent-child chunker
 ├── run.py                    # Interactive CLI runner
 ├── requirements.txt          # Dependencies
 └── .env                      # Configuration
 ```
+*(Note: Local system logs under `audit.d/` are ignored in version control).*
 
 ---
 
-Roadmap
+## Roadmap
 
 Actively expanding this project with the following improvements:
 
-1) Semantic Caching — cache and reuse responses for semantically similar queries to reduce redundant LLM/embedding calls and improve latency.
-2) Hybrid Search (BM25 + Vector) — combine keyword-based BM25 retrieval with dense vector search to improve recall, especially for queries with exact terms or        rare entities that embeddings alone can miss.
-3) Reranking Layer — add a reranking step after retrieval to reorder candidates by relevance before generation, validated by the agent's existing self-correction loop.
+1) **Hybrid Search (BM25 + Vector)** — combine keyword-based BM25 retrieval with dense vector search to improve recall, especially for queries with exact terms or rare entities that embeddings alone can miss.
+2) **Reranking Layer** — add a reranking step after retrieval to reorder candidates by relevance before generation, validated by the agent's existing self-correction loop.
 
 ## License
 
