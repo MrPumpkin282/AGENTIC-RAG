@@ -159,13 +159,22 @@ def add_documents(children, parents):
     ids = [_point_id(c.metadata["child_id"]) for c in children]
 
     added_ids = []
-    batch_size = 50
-    for i in range(0, len(children), batch_size):
+    batch_size = 16
+    i = 0
+    while i < len(children):
         chunk_children = children[i : i + batch_size]
         chunk_ids = ids[i : i + batch_size]
-        res = store.add_documents(chunk_children, ids=chunk_ids)
-        added_ids.extend(res)
+        try:
+            res = store.add_documents(chunk_children, ids=chunk_ids)
+            added_ids.extend(res)
+            i += batch_size
+        except Exception as exc:
+            if batch_size == 1:
+                raise RuntimeError(
+                    f"Embedding failed for child chunk id={chunk_ids[0]}: {exc}"
+                ) from exc
+            # The NIM embedding endpoint rejected this batch (commonly a per-request
+            # input-count limit). Halve the batch size and retry the same offset
+            # instead of aborting the whole ingestion run.
+            batch_size = max(1, batch_size // 2)
     return added_ids
-
-
-    

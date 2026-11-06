@@ -35,3 +35,14 @@ htmlcov/
 .DS_Store
 Thumbs.db
 tempCodeRunnerFile.py
+
+# sample test files
+sample.pdf
+test.pdf
+.sample.pdf
+.test.pdf
+
+# audit
+audit.db
+.audit.db
+data/audit.db

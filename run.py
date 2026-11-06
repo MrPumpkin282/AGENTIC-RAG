@@ -183,10 +183,14 @@ def run_pipeline(question: str) -> dict:
 
             elif node_name == "generate_from_kb":
                 citations = updates.get("citations", [])
+                # Dynamically extract the last trace message from the state updates
+                trace_list = updates.get("trace", [])
+                dynamic_mode = trace_list[-1] if trace_list else "Grounded generation from uploaded document."
+                
                 print_step(
                     "[STEP 7: ANSWER GENERATION (Private KB)]",
                     [
-                        "Mode     : Grounded generation from private company documents.",
+                        f"Mode     : {dynamic_mode}",
                         f"Citations: {len(citations)} source document(s)",
                     ],
                 )

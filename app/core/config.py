@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     audit_db_path: str = str(BASE_DIR / "data"/ "audit.db")
     upload_dir: str = str(BASE_DIR / "uploads")
     model_config = SettingsConfigDict(env_file=str(BASE_DIR / ".env"), extra="ignore")
+    cache_similarity_threshold: float = 0.85
 
 @lru_cache
 def get_settings() -> Settings:

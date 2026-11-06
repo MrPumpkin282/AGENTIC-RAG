@@ -10,6 +10,7 @@ from langgraph.graph import StateGraph, START, END
 from app.core.config import get_settings
 from app.rag.state import AgentState, RouteDecision, EvidenceGrade
 from app.rag.vector_stores import get_vectorstore, get_parents, _namespace_filter
+from app.services.cache import lookup, store
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -61,12 +62,40 @@ def doc_label(d):
 def build_context(docs):
     parts, total = [], 0
     for d in docs:
-        text = f"[Source: {doc_label(d)}]\n{d.page_content}"
+        text = f"\n{d.page_content}"
         if total + len(text) > MAX_CONTEXT_CHARS:
             break
         parts.append(text)
         total += len(text)
     return "\n\n".join(parts)
+
+
+# =====================================================================
+# SEMANTIC CACHE NODES & ROUTING
+# =====================================================================
+
+def check_cache(state: AgentState):
+    """Check the semantic cache and greeting interceptor before hitting the router."""
+    question = state["question"]
+    cached = lookup(question)
+    if cached:
+        return {
+            "answer": cached.get("answer"),
+            "source_used": cached.get("source_used", "cache"),
+            "citations": cached.get("citations", []),
+            "trace": add_trace(state, "Semantic cache -> HIT"),
+            "cache_hit": True
+        }
+    return {"cache_hit": False, "trace": add_trace(state, "Semantic cache -> MISS")}
+
+def route_after_cache(state: AgentState) -> Literal["route_question", "__end__"]:
+    """Route directly to END if cache hits, otherwise proceed to normal intent routing."""
+    return END if state.get("cache_hit") else "route_question"
+
+
+# =====================================================================
+# EXISTING PIPELINE LOGIC
+# =====================================================================
 
 def _classify_route(question: str) -> str:
     prompt = f"""You route user questions for an intelligent knowledge assistant.
@@ -183,11 +212,16 @@ Question: {state['question']}
 def generate_from_kb(state: AgentState):
     docs = state.get("kb_docs", [])
     context = build_context(docs)
+    
+    # Extract the file name from the document metadata dynamically
+    pdf_name = docs[0].metadata.get("file_name", "uploaded doc") if docs else "uploaded doc"
+
     answer = llm().invoke(f"""
 You are an expert AI knowledge assistant. Answer the user question accurately and comprehensively using ONLY the provided knowledge base context below.
 Be concise, well-structured, and factual. Do not fabricate facts outside the context.
 Question: {state['question']}\n\nKnowledge Base:\n{context}
 """).content
+    
     citations, seen = [], set()
     for d in docs:
         name = d.metadata.get("file_name", "Knowledge Base")
@@ -200,7 +234,23 @@ Question: {state['question']}\n\nKnowledge Base:\n{context}
         if page is not None:
             c["page"] = page + 1
         citations.append(c)
-    return {"answer": answer, "source_used": "kb", "citations": citations, "trace": add_trace(state, "Answer generation -> KNOWLEDGE BASE")}
+        
+    # Automatically store grounded response in semantic cache
+    store(
+        question=state["question"],
+        answer=answer,
+        source_used="kb",
+        citations=citations
+    )
+
+    # Use the dynamic filename in your trace log message
+    trace_message = f'Grounded generation from the uploaded doc "{pdf_name}"'
+    return {
+        "answer": answer, 
+        "source_used": "kb", 
+        "citations": citations, 
+        "trace": add_trace(state, trace_message)
+    }
 
 def generate_from_web(state: AgentState):
     answer = llm().invoke(f"""
@@ -208,6 +258,15 @@ You are an expert AI knowledge assistant. The private knowledge base was insuffi
 Answer the user question using ONLY the external web evidence below. Note clearly in your answer that this information is synthesized from external web sources.
 Question: {state['question']}\n\nWeb evidence:\n{state.get('web_results', '')[:MAX_CONTEXT_CHARS]}
 """).content
+    citations = state.get("citations", [])
+    
+    store(
+        question=state["question"],
+        answer=answer,
+        source_used="web",
+        citations=citations
+    )
+
     return {"answer": answer, "source_used": "web", "trace": add_trace(state, "Answer generation -> WEB SEARCH")}
 
 def direct_answer(state: AgentState):
@@ -225,6 +284,7 @@ def insufficient(state: AgentState):
 def build_graph():
     graph = StateGraph(AgentState)
     for name, fn in {
+        "check_cache": check_cache,
         "route_question": route_question,
         "retrieve_kb": retrieve_kb,
         "grade_kb": grade_kb,
@@ -238,7 +298,12 @@ def build_graph():
     }.items():
         graph.add_node(name, fn)
 
-    graph.add_edge(START, "route_question")
+    graph.add_edge(START, "check_cache")
+    graph.add_conditional_edges("check_cache", route_after_cache, {
+        "route_question": "route_question",
+        END: END
+    })
+    
     graph.add_conditional_edges("route_question", route_after_router, {
         "retrieve_kb": "retrieve_kb", "direct_answer": "direct_answer"
     })
