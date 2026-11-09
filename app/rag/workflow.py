@@ -3,12 +3,15 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="langchain_nvidia_ai_endpoints")
 
 from langgraph.graph import StateGraph, START, END
+from app.core.config import get_settings
 from app.rag.state import AgentState
 from app.rag.cache_nodes import check_cache, route_after_cache
 from app.rag.router import route_question, route_after_router
 from app.rag.retrieval import retrieve_kb, search_web, rewrite_query
 from app.rag.grading import grade_kb, after_kb, grade_web, after_web
 from app.rag.generation import generate_from_kb, generate_from_web, direct_answer, insufficient
+
+settings = get_settings()
 
 
 def build_graph():
@@ -62,4 +65,5 @@ def ask(question: str):
         "trace": [],
         "citations": [],
     }
-    return agent_graph.invoke(initial)
+    config = {"recursion_limit": settings.workflow_recursion_limit}
+    return agent_graph.invoke(initial, config=config)

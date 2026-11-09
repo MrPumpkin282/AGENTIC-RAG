@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 # Define common zero-cost conversational triggers
-GREETINGS = {"hi", "hey", "hello", "ping", "sup", "greetings", "hey there", "hi there"}
+GREETINGS = {"hi", "hey", "hello", "ping", "sup", "greetings", "hey there", "hi there", "hello there"}
 
 # --- FREE TIER SAFEGUARDS ---
 MAX_CACHE_SIZE = 500                 # Maximum number of cached questions per collection
@@ -55,7 +55,7 @@ def lookup(question: str):
     if not question or not question.strip():
         return None
 
-    cleaned_question = question.strip().lower()
+    cleaned_question = question.strip().lower().rstrip("!?., ")
 
     # 1. Zero-Cost Fast-Path Interceptor for Greetings
     if cleaned_question in GREETINGS:
@@ -66,6 +66,7 @@ def lookup(question: str):
             "answer": "Hello! How can I help you with your documents today?",
             "source_used": "direct",
             "citations": [],
+            "score": 1.0,
             "cached_at": time.time(),
         }
 
@@ -104,7 +105,9 @@ def lookup(question: str):
         return None
 
     logger.debug("Semantic cache hit (score %.4f) for: %s", hit.score, question[:80])
-    return hit.payload
+    res = dict(hit.payload)
+    res["score"] = hit.score
+    return res
 
 
 def _enforce_size_limit(client, collection_name: str, namespace: str):

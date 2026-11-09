@@ -1,0 +1,6 @@
+# Development and Testing Dependencies
+-r requirements.txt
+
+# Testing framework and test HTTP client
+pytest==9.1.1
+httpx==0.28.1

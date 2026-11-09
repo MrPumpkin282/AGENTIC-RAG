@@ -8,7 +8,7 @@ Unlike traditional RAG systems that blindly trust vector search, this agent **fa
 
 ## Architecture Flow
 
-![Architecture Workflow Diagram](workflow_diagram.png)
+![Architecture Workflow Diagram](docs/workflow_diagram.png)
 
 The pipeline executes a self-corrective LangGraph workflow:
 1. **Semantic Cache Check**: Intercepts greetings and checks cosine similarity against previously answered questions in Qdrant before invoking models.
@@ -162,13 +162,17 @@ uvicorn app.main:app --port 8080 --reload
 │   ├── pipeline.py           # Execution stream runner
 │   ├── ingest.py             # CLI document ingestion handler
 │   └── repl.py               # Interactive CLI shell
-├── project_structure/
-│   └── create_project.py     # Directory and file scaffold generator
+├── docs/
+│   └── workflow_diagram.png  # Architecture workflow flowchart
 ├── tests/
-│   └── test.py               # Integration smoke tests
+│   ├── fixtures/             # Deterministic test PDFs (sample.pdf, test.pdf)
+│   ├── unit/                 # Unit test suites (api, audit, bm25, cache, cli, rrf, state)
+│   ├── integration/          # Integration test suites (pipeline, chunking, fixtures)
+│   ├── conftest.py           # Pytest shared fixtures & environment configuration
+│   └── model_checker.py      # Embedding model compatibility checker
 ├── run.py                    # CLI entrypoint (argparse + bootstrap)
-├── workflow_diagram.png      # Architecture workflow flowchart
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Pinned production dependencies
+├── requirements-dev.txt      # Testing and development dependencies
 ├── .env.example              # Environment variables template
 └── .env                      # Local configuration (git-ignored)
 ```

@@ -1,36 +1,51 @@
-# Environment & secrets
+# Environment secrets
 .env
+.env.*
+!.env.example
 
-# Python
+# Python bytecode & cache
 __pycache__/
 *.py[cod]
-*.egg-info/
-dist/
-build/
-*.egg
+*$py.class
+*.so
+.Python
 
-# Virtual environment
+# Virtual environments
 .venv/
 venv/
+ENV/
+env/
 
-# IDE
+# Runtime data & SQLite databases
+data/
+data/audit.db
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Runtime file uploads
+uploads/*
+!uploads/.gitkeep
+
+# Distribution archives & builds
+*.zip
+*.tar.gz
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & Editor files
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Data & uploads (generated at runtime)
-data/
-uploads/
-
-# OS
+# Operating System
 Thumbs.db
 .DS_Store
-
-# Archives
-*.zip
-
-# sample files
-
-sample.pdf
-test.pdf

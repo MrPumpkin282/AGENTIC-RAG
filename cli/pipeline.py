@@ -18,8 +18,9 @@ def run_pipeline(question: str, settings) -> dict:
     }
 
     final_state: dict = dict(initial)
+    config = {"recursion_limit": settings.workflow_recursion_limit}
 
-    for chunk in agent_graph.stream(initial, stream_mode="updates"):
+    for chunk in agent_graph.stream(initial, stream_mode="updates", config=config):
         for node_name, updates in chunk.items():
             final_state.update(updates)
             print_node_update(node_name, updates, final_state, question, settings)

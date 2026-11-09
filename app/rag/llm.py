@@ -11,7 +11,7 @@ from app.rag.state import AgentState
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-MAX_CONTEXT_CHARS = 18000
+MAX_CONTEXT_CHARS = settings.max_context_chars
 MAX_QUERY_CHARS = 1000
 
 _llm = None

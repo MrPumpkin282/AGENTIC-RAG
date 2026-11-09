@@ -1,4 +1,3 @@
-# app/rag/reranking.py
 import logging
 
 from langchain_nvidia_ai_endpoints import NVIDIARerank
@@ -12,10 +11,12 @@ _reranker = None
 def get_reranker():
     global _reranker
     if _reranker is None:
+        if not settings.nvidia_api_key:
+            raise RuntimeError("NVIDIA_API_KEY is missing for reranker")
         _reranker = NVIDIARerank(
-            model="nvidia/llama-nemotron-rerank-vl-1b-v2",
+            model=settings.rerank_model,
             api_key=settings.nvidia_api_key,
-            top_n=settings.top_k,
+            top_n=settings.rerank_top_k,
         )
     return _reranker
 

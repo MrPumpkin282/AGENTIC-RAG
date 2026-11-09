@@ -1,8 +1,5 @@
 from pathlib import Path
-from app.services.ingestion import load_file, chunk_documents, SUPPORTED
-from app.rag.vector_stores import add_documents
-from app.rag.bm25 import invalidate_bm25_index
-from app.services.cache import clear_namespace
+from app.services.ingestion import ingest_document, SUPPORTED
 
 
 def handle_ingest(file_path_str: str, settings) -> None:
@@ -26,19 +23,15 @@ def handle_ingest(file_path_str: str, settings) -> None:
     print("-" * 79)
 
     try:
-        print("[1/3] Loading document...")
-        docs = load_file(path)
-        print(f"      Loaded {len(docs)} raw document section(s).")
-
+        print("[1/3] Loading & parsing document...")
         print("[2/3] Chunking hierarchically (Parent 2000 chars, Child 400 chars)...")
-        children, parents = chunk_documents(docs)
-        print(f"      Generated {len(parents)} parent chunk(s) and {len(children)} searchable child chunk(s).")
+        print("[3/3] Generating embeddings, indexing Qdrant, syncing BM25 & invalidating cache...")
 
-        print("[3/3] Generating embeddings & indexing into Qdrant...")
-        ids = add_documents(children, parents)
-        invalidate_bm25_index()
-        clear_namespace()
-        print(f"      Successfully indexed {len(ids)} child vector(s) into '{settings.qdrant_index_name}'.")
+        result = ingest_document(path)
+
+        print(f"      Generated {result['parents']} parent chunk(s) and {result['chunks']} searchable child chunk(s).")
+        print(f"      Successfully indexed {result['ids_created']} child vector(s) into '{settings.qdrant_index_name}'.")
+        print(f"      Hybrid lexical index invalidated & semantic cache purged.")
 
         print("-" * 79)
         print(" [SUCCESS] Document is now live and retrievable in the Agentic RAG pipeline!")
