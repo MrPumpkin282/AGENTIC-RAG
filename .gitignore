@@ -1,48 +1,36 @@
-# Byte-compiled / optimized files
+# Environment & secrets
+.env
+
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
 
-# Virtual environments
+# Virtual environment
 .venv/
 venv/
-env/
 
-# Environment variables & secrets
-.env
-.env.*
-!.env.example
-
-# Local runtime data, uploads & logs
-data/*.db
-data/*.db-journal
-uploads/*
-!uploads/.gitkeep
-*.log
-
-# Testing & quality caches
-.pytest_cache/
-.coverage
-htmlcov/
-.mypy_cache/
-.ruff_cache/
-
-# IDE & OS files
-.vscode/
+# IDE
 .idea/
+.vscode/
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
-tempCodeRunnerFile.py
 
-# sample test files
+# Data & uploads (generated at runtime)
+data/
+uploads/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Archives
+*.zip
+
+# sample files
+
 sample.pdf
 test.pdf
-.sample.pdf
-.test.pdf
-
-# audit
-audit.db
-.audit.db
-data/audit.db

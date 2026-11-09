@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     app_name: str = "Agentic Rag"
     app_env: str = "dev"
+    log_level: str = "WARNING"
     nvidia_api_key: str = ""
     tavily_api_key: str = ""
     qdrant_api_key: str = ""

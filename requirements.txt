@@ -26,6 +26,9 @@ langchain-tavily
 pypdf
 python-docx
 
+# Hybrid search (BM25)
+rank-bm25
+
 # Testing
 pytest
 httpx

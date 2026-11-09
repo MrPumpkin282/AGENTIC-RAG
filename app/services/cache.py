@@ -59,7 +59,7 @@ def lookup(question: str):
 
     # 1. Zero-Cost Fast-Path Interceptor for Greetings
     if cleaned_question in GREETINGS:
-        logger.info("Exact match greeting intercepted. Bypassing embedding API.")
+        logger.debug("Exact match greeting intercepted. Bypassing embedding API.")
         return {
             "namespace": _namespace(),
             "question": question,
@@ -91,19 +91,19 @@ def lookup(question: str):
     # 3. TTL Expiration Check
     cached_at = hit.payload.get("cached_at", 0)
     if time.time() - cached_at > TTL_SECONDS:
-        logger.info("Semantic cache expired (Age > 7 days). Deleting stale point.")
+        logger.debug("Semantic cache expired (Age > 7 days). Deleting stale point.")
         client.delete(
             collection_name=_cache_name(),
-            points_selector=models.PointIdsSelector(points=[hit.id]),
+            points_selector=models.PointIdsList(points=[hit.id]),
         )
         return None
 
     # 4. Similarity Threshold Check
     if hit.score < settings.cache_similarity_threshold:
-        logger.info("Semantic cache miss (best score %.4f < threshold %.4f)", hit.score, settings.cache_similarity_threshold)
+        logger.debug("Semantic cache miss (best score %.4f < threshold %.4f)", hit.score, settings.cache_similarity_threshold)
         return None
 
-    logger.info("Semantic cache hit (score %.4f) for: %s", hit.score, question[:80])
+    logger.debug("Semantic cache hit (score %.4f) for: %s", hit.score, question[:80])
     return hit.payload
 
 
@@ -121,7 +121,7 @@ def _enforce_size_limit(client, collection_name: str, namespace: str):
         current_count = count_result.count
 
         if current_count >= MAX_CACHE_SIZE:
-            logger.info("Cache size limit reached (%d/%d). Evicting oldest entries...", current_count, MAX_CACHE_SIZE)
+            logger.debug("Cache size limit reached (%d/%d). Evicting oldest entries...", current_count, MAX_CACHE_SIZE)
             
             # Scroll through points to find the oldest ones
             records, _ = client.scroll(
@@ -143,9 +143,9 @@ def _enforce_size_limit(client, collection_name: str, namespace: str):
                 if points_to_delete:
                     client.delete(
                         collection_name=collection_name,
-                        points_selector=models.PointIdsSelector(points=points_to_delete),
+                        points_selector=models.PointIdsList(points=points_to_delete),
                     )
-                    logger.info("Evicted %d oldest cache entries to free up Qdrant space.", len(points_to_delete))
+                    logger.debug("Evicted %d oldest cache entries to free up Qdrant space.", len(points_to_delete))
     except Exception as exc:
         logger.warning("Failed to enforce cache size limit: %s", exc)
 
@@ -182,7 +182,7 @@ def store(question: str, answer: str, source_used: str, citations=None):
         },
     )
     client.upsert(collection_name=_cache_name(), points=[point])
-    logger.info("Semantic cache store for: %s", question[:80])
+    logger.debug("Semantic cache store for: %s", question[:80])
 
 
 def clear_namespace():
@@ -192,4 +192,4 @@ def clear_namespace():
         collection_name=_cache_name(),
         points_selector=models.FilterSelector(filter=_namespace_filter(_namespace())),
     )
-    logger.info("Semantic cache cleared for namespace: %s", _namespace())
+    logger.debug("Semantic cache cleared for namespace: %s", _namespace())

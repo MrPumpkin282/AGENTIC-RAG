@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 from app.core.config import get_settings
 from app.rag.workflow import ask
 from app.rag.vector_stores import add_documents
+from app.rag.bm25 import invalidate_bm25_index
+from app.services.cache import clear_namespace
 from app.services.ingestion import load_file, chunk_documents, SUPPORTED
 from app.services.audit import write_audit
 
@@ -60,6 +62,8 @@ def ingest(file: UploadFile = File(...), x_admin_key: str = Header(default="")):
     docs = load_file(dest)
     children, parents = chunk_documents(docs)
     ids = add_documents(children, parents)
+    invalidate_bm25_index()
+    clear_namespace()
     return {
         "message": "Document indexed",
         "file": dest.name,

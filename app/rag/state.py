@@ -52,3 +52,4 @@ class AgentState(TypedDict):
     retry_count: NotRequired[int]
     trace: NotRequired[List[str]]
     citations: NotRequired[List[Citation]]
+    cache_hit: NotRequired[bool]

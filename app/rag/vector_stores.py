@@ -1,3 +1,4 @@
+import logging
 import uuid
 import warnings
 
@@ -9,6 +10,7 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, models
 from app.core.config import get_settings
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
@@ -177,4 +179,8 @@ def add_documents(children, parents):
             # input-count limit). Halve the batch size and retry the same offset
             # instead of aborting the whole ingestion run.
             batch_size = max(1, batch_size // 2)
+            logger.warning(
+                "Embedding batch rejected (batch_size was %d), retrying with batch_size=%d: %s",
+                batch_size * 2, batch_size, exc,
+            )
     return added_ids
