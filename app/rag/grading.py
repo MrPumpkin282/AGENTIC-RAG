@@ -1,8 +1,9 @@
 import logging
 from typing import Literal
+
 from app.core.config import get_settings
+from app.rag.llm import MAX_CONTEXT_CHARS, add_trace, build_context, llm
 from app.rag.state import AgentState, EvidenceGrade
-from app.rag.llm import llm, add_trace, build_context, MAX_CONTEXT_CHARS
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

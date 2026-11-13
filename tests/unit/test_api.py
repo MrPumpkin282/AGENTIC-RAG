@@ -1,8 +1,9 @@
-from io import BytesIO
 from unittest.mock import patch
+
 from fastapi.testclient import TestClient
-from app.main import app
+
 from app.core.config import get_settings
+from app.main import app
 
 client = TestClient(app)
 settings = get_settings()

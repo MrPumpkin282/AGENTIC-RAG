@@ -3,12 +3,14 @@ import logging
 import re
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, UploadFile, File, HTTPException, Header
+
+from fastapi import APIRouter, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
+
 from app.core.config import get_settings
 from app.rag.workflow import ask
-from app.services.ingestion import ingest_document, SUPPORTED
 from app.services.audit import write_audit
+from app.services.ingestion import SUPPORTED, ingest_document
 
 logger = logging.getLogger(__name__)
 

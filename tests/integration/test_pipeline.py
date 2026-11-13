@@ -1,10 +1,10 @@
 from pathlib import Path
-from unittest.mock import patch, MagicMock
-from app.services.ingestion import load_file, chunk_documents, resolve_parents
-from app.rag.rank_fusion import reciprocal_rank_fusion
-from app.rag.grading import after_kb, after_web
+
 from app.rag.cache_nodes import check_cache, route_after_cache
+from app.rag.grading import after_kb, after_web
+from app.rag.rank_fusion import reciprocal_rank_fusion
 from app.rag.state import AgentState
+from app.services.ingestion import chunk_documents, load_file, resolve_parents
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
 SAMPLE_PDF = FIXTURES_DIR / "sample.pdf"

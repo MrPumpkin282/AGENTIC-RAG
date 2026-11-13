@@ -4,8 +4,9 @@ import threading
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from queue import Queue, Empty
+from queue import Empty, Queue
 from typing import Any
+
 from app.core.config import get_settings
 
 settings = get_settings()

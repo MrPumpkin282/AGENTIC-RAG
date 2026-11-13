@@ -1,6 +1,7 @@
 import time
-from unittest.mock import patch, MagicMock
-from app.services.cache import lookup, store, clear_namespace, GREETINGS
+from unittest.mock import MagicMock, patch
+
+from app.services.cache import clear_namespace, lookup
 
 
 def test_lookup_empty_question():

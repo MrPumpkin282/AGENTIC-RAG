@@ -1,6 +1,7 @@
 import logging
 
 from langchain_nvidia_ai_endpoints import NVIDIARerank
+
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

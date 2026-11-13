@@ -1,12 +1,12 @@
 import logging
 
 from app.core.config import get_settings
-from app.rag.state import AgentState
-from app.rag.llm import llm, web_search_tool, add_trace, MAX_QUERY_CHARS
-from app.rag.vector_stores import get_vectorstore, get_parents, _namespace_filter
 from app.rag.bm25 import bm25_search
+from app.rag.llm import MAX_QUERY_CHARS, add_trace, llm, web_search_tool
 from app.rag.rank_fusion import reciprocal_rank_fusion
 from app.rag.reranking import rerank
+from app.rag.state import AgentState
+from app.rag.vector_stores import _namespace_filter, get_parents, get_vectorstore
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

@@ -2,8 +2,11 @@
 
 import time
 import warnings
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
+
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
+
 from app.core.config import get_settings
 
 warnings.filterwarnings("ignore")
@@ -85,7 +88,7 @@ def run_checks():
     print(f"{'MODEL':48} {'STATUS':8} {'DIM':>6} {'SEC':>6}")
     print("=" * 70)
     for model_name, status, dim, sec, note in results:
-        print(f"{model_name:48} {status:8} {str(dim or '-'):>6} {sec:>6}")
+        print(f"{model_name:48} {status:8} {dim or '-'!s:>6} {sec:>6}")
     print("=" * 70)
 
 

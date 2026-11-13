@@ -3,8 +3,9 @@ import time
 import uuid
 
 from qdrant_client import models
+
 from app.core.config import get_settings
-from app.rag.vector_stores import get_client, get_embeddings, _namespace
+from app.rag.vector_stores import _namespace, get_client, get_embeddings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

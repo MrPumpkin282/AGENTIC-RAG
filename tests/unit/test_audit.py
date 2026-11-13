@@ -1,7 +1,7 @@
 import concurrent.futures
-import sqlite3
 from pathlib import Path
-from app.services.audit import SQLiteConnectionPool, write_audit, get_recent_audits
+
+from app.services.audit import SQLiteConnectionPool
 
 
 def test_sqlite_pool_wal_mode_and_init(tmp_dir):

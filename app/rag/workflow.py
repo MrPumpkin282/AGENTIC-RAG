@@ -2,14 +2,20 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="langchain_nvidia_ai_endpoints")
 
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
+
 from app.core.config import get_settings
-from app.rag.state import AgentState
 from app.rag.cache_nodes import check_cache, route_after_cache
-from app.rag.router import route_question, route_after_router
-from app.rag.retrieval import retrieve_kb, search_web, rewrite_query
-from app.rag.grading import grade_kb, after_kb, grade_web, after_web
-from app.rag.generation import generate_from_kb, generate_from_web, direct_answer, insufficient
+from app.rag.generation import (
+    direct_answer,
+    generate_from_kb,
+    generate_from_web,
+    insufficient,
+)
+from app.rag.grading import after_kb, after_web, grade_kb, grade_web
+from app.rag.retrieval import retrieve_kb, rewrite_query, search_web
+from app.rag.router import route_after_router, route_question
+from app.rag.state import AgentState
 
 settings = get_settings()
 

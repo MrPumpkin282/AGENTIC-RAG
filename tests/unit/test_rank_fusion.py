@@ -1,6 +1,7 @@
 from langchain_core.documents import Document
-from app.rag.rank_fusion import reciprocal_rank_fusion
+
 from app.core.config import get_settings
+from app.rag.rank_fusion import reciprocal_rank_fusion
 
 
 def test_rrf_empty_lists():

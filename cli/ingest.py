@@ -1,5 +1,6 @@
 from pathlib import Path
-from app.services.ingestion import ingest_document, SUPPORTED
+
+from app.services.ingestion import SUPPORTED, ingest_document
 
 
 def handle_ingest(file_path_str: str, settings) -> None:
@@ -31,7 +32,7 @@ def handle_ingest(file_path_str: str, settings) -> None:
 
         print(f"      Generated {result['parents']} parent chunk(s) and {result['chunks']} searchable child chunk(s).")
         print(f"      Successfully indexed {result['ids_created']} child vector(s) into '{settings.qdrant_index_name}'.")
-        print(f"      Hybrid lexical index invalidated & semantic cache purged.")
+        print("      Hybrid lexical index invalidated & semantic cache purged.")
 
         print("-" * 79)
         print(" [SUCCESS] Document is now live and retrievable in the Agentic RAG pipeline!")

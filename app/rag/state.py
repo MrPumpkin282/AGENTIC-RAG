@@ -1,8 +1,9 @@
 
-from typing import List, Literal
-from typing_extensions import TypedDict, NotRequired
-from pydantic import BaseModel, Field
+from typing import Literal
+
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
+from typing_extensions import NotRequired, TypedDict
 
 
 # 1. Defines the routing decision made by the LLM
@@ -40,7 +41,7 @@ class AgentState(TypedDict):
 
     # Optional fields populated as the workflow executes
     current_query: NotRequired[str]
-    kb_docs: NotRequired[List[Document]]
+    kb_docs: NotRequired[list[Document]]
     web_results: NotRequired[str]
 
     kb_grade: NotRequired[Literal["good", "weak"]]
@@ -50,6 +51,6 @@ class AgentState(TypedDict):
     source_used: NotRequired[Literal["kb", "web", "direct", "none"]]
 
     retry_count: NotRequired[int]
-    trace: NotRequired[List[str]]
-    citations: NotRequired[List[Citation]]
+    trace: NotRequired[list[str]]
+    citations: NotRequired[list[Citation]]
     cache_hit: NotRequired[bool]

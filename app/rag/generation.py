@@ -1,5 +1,5 @@
+from app.rag.llm import MAX_CONTEXT_CHARS, add_trace, build_context, llm
 from app.rag.state import AgentState
-from app.rag.llm import llm, add_trace, build_context, MAX_CONTEXT_CHARS
 from app.services.cache import store
 
 

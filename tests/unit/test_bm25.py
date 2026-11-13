@@ -1,7 +1,9 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
 from langchain_core.documents import Document
 from rank_bm25 import BM25Okapi
-from app.rag.bm25 import _tokenize, _BM25Index, bm25_search, invalidate_bm25_index
+
+from app.rag.bm25 import _BM25Index, _tokenize, bm25_search, invalidate_bm25_index
 
 
 def test_tokenize():

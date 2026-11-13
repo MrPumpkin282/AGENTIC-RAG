@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from app.rag.state import AgentState, RouteDecision, EvidenceGrade
+
+from app.rag.state import AgentState, EvidenceGrade, RouteDecision
 
 
 def test_route_decision_valid():

@@ -1,7 +1,8 @@
 import logging
 from typing import Literal
+
+from app.rag.llm import add_trace, llm
 from app.rag.state import AgentState, RouteDecision
-from app.rag.llm import llm, add_trace
 
 logger = logging.getLogger(__name__)
 

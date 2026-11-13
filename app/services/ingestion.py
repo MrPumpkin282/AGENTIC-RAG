@@ -2,13 +2,14 @@ import hashlib
 import logging
 from pathlib import Path
 from typing import Any
+
+from docx import Document as DocxDocument
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
-from docx import Document as DocxDocument
 
-from app.rag.vector_stores import add_documents
 from app.rag.bm25 import invalidate_bm25_index
+from app.rag.vector_stores import add_documents
 from app.services.cache import clear_namespace
 
 logger = logging.getLogger(__name__)
@@ -20,11 +21,6 @@ CHILD_SIZE, CHILD_OVERLAP = 400, 60
 
 
 def load_file(path: Path | str) -> list[Document]:
-<<<<<<< HEAD
-=======
-    """Load and parse document content directly using native libraries (pypdf, python-docx, pathlib)
-    avoiding deprecated wrapper dependencies."""
->>>>>>> 7b8d362 (action beam)
     path = Path(path)
     suffix = path.suffix.lower()
 
@@ -116,11 +112,7 @@ def resolve_parents(child_hits: list[Document], parents: dict[str, Document]) ->
 
 def ingest_document(file_path: Path | str) -> dict[str, Any]:
     """Unified ingestion pipeline:
-<<<<<<< HEAD
-    1. Loads and parses the document (PDF, DOCX, TXT, MD)
-=======
     1. Loads and parses the document (PDF, DOCX, TXT, MD) directly
->>>>>>> 7b8d362 (action beam)
     2. Hierarchically chunks into parents (2000 chars) and children (400 chars)
     3. Generates dense embeddings & stores vectors in Qdrant
     4. Invalidates in-memory BM25 lexical index to trigger re-sync

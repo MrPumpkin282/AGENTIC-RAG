@@ -1,7 +1,8 @@
-from app.core.config import get_settings
-from cli.trace_printer import print_step, print_node_update
-from cli.banner import build_banner
 from langchain_core.documents import Document
+
+from app.core.config import get_settings
+from cli.banner import build_banner
+from cli.trace_printer import print_node_update, print_step
 
 settings = get_settings()
 

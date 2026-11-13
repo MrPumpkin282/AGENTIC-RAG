@@ -1,10 +1,12 @@
 # app/rag/bm25.py
 import re
 import threading
-from rank_bm25 import BM25Okapi
+
 from langchain_core.documents import Document
-from app.rag.vector_stores import get_client, _namespace_filter
+from rank_bm25 import BM25Okapi
+
 from app.core.config import get_settings
+from app.rag.vector_stores import _namespace_filter, get_client
 
 settings = get_settings()
 

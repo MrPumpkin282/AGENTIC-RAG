@@ -8,6 +8,7 @@ from langchain_core.documents import Document
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient, models
+
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)

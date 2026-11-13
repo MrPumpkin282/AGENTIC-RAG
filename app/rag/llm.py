@@ -5,6 +5,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="langchain_nvidia
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_tavily import TavilySearch
+
 from app.core.config import get_settings
 from app.rag.state import AgentState
 
