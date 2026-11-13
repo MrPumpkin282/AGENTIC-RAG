@@ -10,32 +10,46 @@ Unlike traditional RAG systems that blindly trust vector search, this agent **fa
 
 ![Architecture Workflow Diagram](docs/workflow_diagram.png)
 
-The pipeline executes a self-corrective LangGraph workflow:
-1. **Semantic Cache Check**: Intercepts greetings and checks cosine similarity against previously answered questions in Qdrant before invoking models.
-2. **Intent Routing**: Classifies the query as casual conversation (`direct`) or requiring documentation (`kb`).
-3. **Hybrid Retrieval**: Queries child chunks using dense Qdrant vector search and BM25 keyword matching, then merges candidates using Reciprocal Rank Fusion (RRF).
-4. **NVIDIA Reranking**: Re-scores parent chunks using `nvidia/llama-nemotron-rerank-vl-1b-v2` to prioritize the most relevant context.
+The system operates across two coordinated pipelines:
+
+### 1. Document Ingestion & Index Synchronization Pipeline
+* **Upload Verification & Security**: Enforces regex path sanitization against directory traversal, streaming file-size limits (max 25 MB), and MIME / magic-byte verification (`%PDF` for PDF, `PK\x03\x04` for DOCX, binary null-byte check for TXT/MD).
+* **Hierarchical Chunking**:
+  * **Parent chunks (2,000 chars)**: Preserved for generation to provide broad context and prevent hallucinations.
+  * **Child chunks (400 chars)**: Prefixed with metadata injection headers (`[File: ... | Page: ...]`) for pinpoint vector search.
+* **Vector Storage**: Generates dense embeddings using NVIDIA NIM (`nvidia/nemotron-3.5-embed-1b`) and stores child vectors and parent payloads in Qdrant Cloud.
+* **Hybrid Lexical Sync**: Automatically invalidates the in-memory BM25Okapi index to trigger an immediate rebuild on the next query.
+* **Automated Cache Invalidation**: Automatically purges the Qdrant semantic cache namespace upon ingestion to eliminate stale cached responses.
+* **Non-Blocking Concurrency**: Document parsing, chunking, and indexing execute as background worker jobs (`asyncio.to_thread`), keeping the FastAPI event loop responsive.
+
+### 2. Self-Corrective Query Execution Workflow
+1. **Semantic Cache Check**: Intercepts greetings (zero-cost bypass) and checks cosine similarity against previously answered questions in Qdrant before invoking models (7-day TTL, 500-item collection cap).
+2. **Intent Routing**: Classifies the query as casual conversation (`direct`) or requiring internal documentation (`kb`).
+3. **Hybrid Retrieval**: Queries child chunks using dense Qdrant vector search and lexical BM25Okapi keyword matching, fusing candidates via Reciprocal Rank Fusion (`RRF k=60`).
+4. **NVIDIA Reranking**: Fetches parent documents and re-scores them using `nvidia/llama-nemotron-rerank-vl-1b-v2` (`top_k=5`) to prioritize the most relevant context, with graceful fallback to fusion order.
 5. **Evidence Grading**: Evaluates whether retrieved chunks contain sufficient facts to answer the question.
-6. **Web Search Fallback**: Automatically invokes Tavily if private documents lack adequate evidence.
-7. **Query Rewriter**: Reformulates search keywords if web evidence is also insufficient (retries up to `max_retries`).
-8. **Answer Generation**: Synthesizes grounded answers citing specific filenames and page numbers, then caches the grounded response.
+6. **Web Search Fallback**: Automatically invokes Tavily Live Search if private documents lack adequate evidence.
+7. **Query Rewriter**: Reformulates search keywords if web evidence is also insufficient (capped at `max_retries=2` and `workflow_recursion_limit=25` to prevent infinite loops).
+8. **Answer Generation**: Synthesizes grounded answers citing specific filenames and page numbers, and writes the response to the semantic cache.
+9. **Audit Trail**: Records questions, routing decisions, citations, and diagnostic execution traces in SQLite (`data/audit.db`) using Write-Ahead Logging (WAL) and connection pooling.
 
 ---
 
 ## Key Features
 
-- **Semantic Caching & Resource Safeguards**: Qdrant-backed cache stores previous answers based on cosine similarity, bypassing expensive LLM/embedding calls for repeat questions. Includes a zero-cost greeting interceptor, 7-day TTL expiration, 500-item size cap, and automatic cache invalidation upon document ingestion.
-- **Hybrid Search (BM25 + Dense + RRF)**: Combines keyword-based BM25 retrieval with dense vector search via Reciprocal Rank Fusion, ensuring exact terms and rare technical entities are never missed.
-- **Reranking Layer**: Uses NVIDIA NV-Rerank (`nvidia/llama-nemotron-rerank-vl-1b-v2`) to reorder retrieved candidates by semantic relevance, with graceful fallback to fusion order.
-- **Multi-Document Synthesis**: Supports answering cross-domain queries spanning multiple ingested documents (e.g. RAG and Operating Systems) within an expanded context window.
+- **Semantic Caching & Resource Safeguards**: Qdrant-backed cache stores previous answers based on cosine similarity, bypassing expensive LLM/embedding calls for repeat questions. Includes a zero-cost greeting interceptor, 7-day TTL expiration, 500-item size cap, and automated cache invalidation upon document ingestion.
+- **Hybrid Search (BM25 + Dense + RRF)**: Combines keyword-based BM25Okapi retrieval with dense vector search via Reciprocal Rank Fusion, ensuring exact terms and rare technical entities are never missed.
+- **Reranking Layer**: Uses NVIDIA NV-Rerank (`nvidia/llama-nemotron-rerank-vl-1b-v2`) to reorder retrieved parent candidates by semantic relevance.
+- **Multi-Document Synthesis**: Supports answering cross-domain queries spanning multiple ingested documents within an expanded context window (`max_context_chars=18000`).
 - **Hierarchical Chunking (Parent-Child)**:
   - **Child chunks (400 chars)**: Embedded with file & page metadata for pinpoint vector search.
-  - **Parent chunks (2,000 chars)**: Retrieved for generation to preserve full context and prevent hallucinations.
+  - **Parent chunks (2,000 chars)**: Retrieved for generation to preserve full context.
 - **Self-Corrective Loop**: Validates evidence before generation; dynamically falls back to live Tavily web search when internal documentation is incomplete.
+- **Concurrency & Storage Hardening**: SQLite configured with Write-Ahead Logging (`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;`) and thread-safe connection pooling to prevent database locking under concurrent load.
 - **Dual Interface**:
   - **CLI Runner**: Interactive terminal streaming of reasoning steps, dynamic trace logs (showing exact filenames), and citations.
-  - **Headless API**: FastAPI endpoints (`/api/chat`, `/api/ingest`, `/api/health`).
-- **Audit Trail**: Logs questions, routing decisions, citations, and execution traces in SQLite (`data/audit.db`).
+  - **Headless API**: FastAPI endpoints (`/api/chat`, `/api/ingest`, `/api/health`) with async offloading and MIME verification.
+- **Production Test Suite**: Modular Pytest unit and integration tests (38 tests) verifying schemas, RRF, BM25, caching, audit concurrency, API routes, and PDF fixtures.
 
 ---
 
@@ -53,8 +67,11 @@ python -m venv .venv
 .venv\Scripts\activate       # Windows
 # source .venv/bin/activate  # Linux / Mac
 
-# Install requirements
+# Install production dependencies
 pip install -r requirements.txt
+
+# (Optional) Install development and testing dependencies
+pip install -r requirements-dev.txt
 ```
 
 ### 2. Environment Variables (`.env`)
@@ -82,8 +99,17 @@ QDRANT_NAME_SPACE=DEFAULT
 NVIDIA_CHAT_MODEL=nvidia/nemotron-3.5-lightning-30b-a3b
 NVIDIA_EMBEDDING_MODEL=nvidia/nemotron-3.5-embed-1b
 
+# ── Hyperparameters & Tuning ─────────────────────────────────────
+RRF_K=60
+RERANK_MODEL=nvidia/llama-nemotron-rerank-vl-1b-v2
+RERANK_TOP_K=5
+MAX_CONTEXT_CHARS=18000
+MAX_RETRIES=2
+WORKFLOW_RECURSION_LIMIT=25
+
 # ── Security & Limits ────────────────────────────────────────────
 ADMIN_API_KEY=localhost
+MAX_UPLOAD_SIZE_MB=25
 CACHE_SIMILARITY_THRESHOLD=0.85
 LOG_LEVEL=WARNING
 ```
@@ -96,7 +122,7 @@ LOG_LEVEL=WARNING
 
 ```bash
 # 1. Ingest documents (.pdf, .docx, .txt, .md)
-python run.py --ingest "path/to/document.pdf"
+python run.py --ingest "tests/fixtures/sample.pdf"
 
 # 2. Ask a question directly
 python run.py "What are the main paradigms of RAG?"
@@ -107,7 +133,7 @@ python run.py
 
 Inside REPL mode:
 - Type your question directly.
-- `ingest <path>` — Ingest a document and invalidate the cache.
+- `ingest <path>` — Ingest a document, sync hybrid indices, and invalidate cache.
 - `clear-cache` — Manually clear cached answers for the current namespace.
 - `flow` — Display the architecture flow banner.
 - `exit` — Quit the CLI.
@@ -126,7 +152,30 @@ uvicorn app.main:app --port 8080 --reload
     "question": "Explain Modular RAG from the survey"
   }
   ```
-- **Upload Document**: `POST http://localhost:8080/api/ingest` (multipart form with `file` and header `x-admin-key: localhost`)
+- **Upload Document**: `POST http://localhost:8080/api/ingest`
+  - Multipart form-data with `file` (supports `.pdf`, `.docx`, `.txt`, `.md`, max 25MB).
+  - Header: `x-admin-key: localhost`
+
+---
+
+## Testing
+
+Run the automated test suite with pytest:
+
+```bash
+# Run all unit and integration tests
+pytest tests -v
+```
+
+The test suite covers:
+- **`tests/unit/test_state.py`**: State schemas and Pydantic validation (`RouteDecision`, `EvidenceGrade`).
+- **`tests/unit/test_rank_fusion.py`**: Reciprocal Rank Fusion math, deduplication, and edge cases.
+- **`tests/unit/test_bm25.py`**: Tokenization, BM25Okapi corpus, scoring, and index invalidation.
+- **`tests/unit/test_cache.py`**: Greeting interceptor, cosine similarity thresholding, and TTL eviction.
+- **`tests/unit/test_audit.py`**: SQLite WAL mode, schema dynamic init, and concurrent write resilience.
+- **`tests/unit/test_api.py`**: Endpoint auth, size limit enforcement (HTTP 413), MIME magic byte verification, and health check.
+- **`tests/unit/test_cli.py`**: Banner formatting and execution trace printer rendering.
+- **`tests/integration/test_pipeline.py`**: Deterministic integration tests using PDF fixtures (`tests/fixtures/sample.pdf` and `test.pdf`).
 
 ---
 
@@ -137,14 +186,14 @@ uvicorn app.main:app --port 8080 --reload
 │   ├── api/
 │   │   └── routes.py         # REST endpoints (/api/chat, /api/ingest, /api/health)
 │   ├── core/
-│   │   ├── config.py         # Settings & .env loader
+│   │   ├── config.py         # Pydantic settings loader & externalized hyperparameters
 │   │   └── logging.py        # Log formatting & noise suppression
 │   ├── rag/
 │   │   ├── state.py          # LangGraph state schema (AgentState)
-│   │   ├── vector_stores.py  # Qdrant client & embedding logic
-│   │   ├── bm25.py           # In-memory BM25 index & invalidation
+│   │   ├── vector_stores.py  # Qdrant vector store & embedding singletons
+│   │   ├── bm25.py           # In-memory BM25Okapi index & invalidation
 │   │   ├── rank_fusion.py    # Reciprocal Rank Fusion (RRF)
-│   │   ├── reranking.py      # NVIDIA NV-Rerank layer
+│   │   ├── reranking.py      # NVIDIA NV-Rerank layer (Llama-Nemotron-Rerank)
 │   │   ├── llm.py            # ChatNVIDIA & Tavily tool singletons
 │   │   ├── cache_nodes.py    # Semantic cache lookup node & routing
 │   │   ├── router.py         # Intent classification node (kb vs direct)
@@ -153,9 +202,9 @@ uvicorn app.main:app --port 8080 --reload
 │   │   ├── generation.py     # Grounded answer generation nodes
 │   │   └── workflow.py       # LangGraph assembly (build_graph, ask)
 │   └── services/
-│       ├── audit.py          # SQLite audit logger (data/audit.db)
-│       ├── cache.py          # Qdrant semantic cache & TTL/size eviction
-│       └── ingestion.py      # Document loader & hierarchical chunker
+│       ├── audit.py          # SQLite audit logger with WAL mode & connection pooling
+│       ├── cache.py          # Qdrant semantic cache with TTL/size eviction
+│       └── ingestion.py      # Unified document loader, chunker & index synchronizer
 ├── cli/
 │   ├── banner.py             # CLI banner and flow diagram text
 │   ├── trace_printer.py      # Per-node trace and step printer
@@ -165,11 +214,7 @@ uvicorn app.main:app --port 8080 --reload
 ├── docs/
 │   └── workflow_diagram.png  # Architecture workflow flowchart
 ├── tests/
-│   ├── fixtures/             # Deterministic test PDFs (sample.pdf, test.pdf)
-│   ├── unit/                 # Unit test suites (api, audit, bm25, cache, cli, rrf, state)
-│   ├── integration/          # Integration test suites (pipeline, chunking, fixtures)
-│   ├── conftest.py           # Pytest shared fixtures & environment configuration
-│   └── model_checker.py      # Embedding model compatibility checker
+│   └── test.py               # Integration smoke tests
 ├── run.py                    # CLI entrypoint (argparse + bootstrap)
 ├── requirements.txt          # Pinned production dependencies
 ├── requirements-dev.txt      # Testing and development dependencies
@@ -177,17 +222,19 @@ uvicorn app.main:app --port 8080 --reload
 └── .env                      # Local configuration (git-ignored)
 ```
 
-*(Note: SQLite database in `data/` and uploads in `uploads/` are generated at runtime and ignored in version control).*
+*(Note: SQLite database in `data/` and uploaded documents in `uploads/` are generated at runtime and strictly ignored in version control).*
 
 ---
 
 ## Roadmap
 
-- [x] **Semantic Caching** — Cosine similarity caching with 7-day TTL and size eviction.
-- [x] **Hybrid Search (BM25 + Vector)** — Dense vector search combined with BM25 keyword matching via Reciprocal Rank Fusion.
-- [x] **Reranking Layer** — NVIDIA NV-Rerank reorders candidates prior to evidence grading.
-- [x] **Multi-Document Synthesis** — Grounded generation across multiple ingested source files in a unified response.
-- [ ] **FastAPI Backend Improvements** — Enhanced async handling, request validation, and production optimization.
+- [x] **Semantic Caching** — Cosine similarity caching with 7-day TTL, 500-item cap, and zero-cost greeting fast-path.
+- [x] **Hybrid Search (BM25 + Vector)** — Dense vector search combined with BM25Okapi keyword matching via Reciprocal Rank Fusion (`rrf_k=60`).
+- [x] **Reranking Layer** — NVIDIA NV-Rerank (`nvidia/llama-nemotron-rerank-vl-1b-v2`) reorders parent candidates prior to evidence grading.
+- [x] **Multi-Document Synthesis** — Grounded generation across multiple ingested source files in a unified response (`max_context_chars=18000`).
+- [x] **FastAPI Backend Improvements** — Non-blocking async worker thread offloading, streaming upload size limits (25MB), and MIME magic-byte verification.
+- [x] **Concurrency & Observability Hardening** — SQLite Write-Ahead Logging (WAL mode), connection pooling, and unified diagnostic telemetry.
+- [x] **Modular Test Suite** — Comprehensive 38-test unit and integration test coverage with fixtures.
 - [ ] **Interactive Web Frontend** — Modern web interface for chat, document upload, and real-time reasoning trace visualization.
 - [ ] **RAG Evaluation** — Automated evaluation metrics for faithfulness, answer relevance, and context precision.
 - [ ] **Minor Improvements** — Code polish, expanded file format loaders, and performance tuning.

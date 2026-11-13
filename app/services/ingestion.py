@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
+from pypdf import PdfReader
 from docx import Document as DocxDocument
 
 from app.rag.vector_stores import add_documents
@@ -20,16 +20,39 @@ CHILD_SIZE, CHILD_OVERLAP = 400, 60
 
 
 def load_file(path: Path | str) -> list[Document]:
+<<<<<<< HEAD
+=======
+    """Load and parse document content directly using native libraries (pypdf, python-docx, pathlib)
+    avoiding deprecated wrapper dependencies."""
+>>>>>>> 7b8d362 (action beam)
     path = Path(path)
     suffix = path.suffix.lower()
+
     if suffix == ".pdf":
-        return PyPDFLoader(str(path)).load()
+        reader = PdfReader(str(path))
+        docs = []
+        for page_idx, page in enumerate(reader.pages):
+            text = page.extract_text() or ""
+            docs.append(
+                Document(
+                    page_content=text,
+                    metadata={"source": str(path), "page": page_idx},
+                )
+            )
+        return docs
+
     if suffix in {".txt", ".md"}:
-        return TextLoader(str(path), autodetect_encoding=True).load()
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            text = path.read_text(encoding="latin-1", errors="replace")
+        return [Document(page_content=text, metadata={"source": str(path)})]
+
     if suffix == ".docx":
         doc = DocxDocument(str(path))
         text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
         return [Document(page_content=text, metadata={"source": str(path)})]
+
     raise ValueError(f"Unsupported file type: {suffix}")
 
 
@@ -93,7 +116,11 @@ def resolve_parents(child_hits: list[Document], parents: dict[str, Document]) ->
 
 def ingest_document(file_path: Path | str) -> dict[str, Any]:
     """Unified ingestion pipeline:
+<<<<<<< HEAD
     1. Loads and parses the document (PDF, DOCX, TXT, MD)
+=======
+    1. Loads and parses the document (PDF, DOCX, TXT, MD) directly
+>>>>>>> 7b8d362 (action beam)
     2. Hierarchically chunks into parents (2000 chars) and children (400 chars)
     3. Generates dense embeddings & stores vectors in Qdrant
     4. Invalidates in-memory BM25 lexical index to trigger re-sync
